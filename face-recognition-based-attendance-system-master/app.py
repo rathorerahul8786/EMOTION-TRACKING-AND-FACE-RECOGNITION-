@@ -7,7 +7,8 @@ import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
 import joblib
-from keras.models import load_model
+from tensorflow.keras.models import load_model
+
 
 #### Saving Date today in 2 different formats
 datetoday = date.today().strftime("%m_%d_%y")
