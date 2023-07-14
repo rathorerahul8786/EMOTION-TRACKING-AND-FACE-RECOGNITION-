@@ -14,7 +14,7 @@ This is a single csv file and contains information about ~ 32300 images.
 
 ## Model
 
-The model achieved a maximum accuracy of ~ 63%.  
+The model achieved a maximum accuracy of ~ 93%.  
 You can find the model along with the pre-processing steps in the file `Emotion_Recognition_Train.ipynb`
 
 ## Usage
