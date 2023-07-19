@@ -106,9 +106,11 @@ def add_attendance(name, emotion):
             f.write(f'\n{username},{userid},{current_time},{emotion}')
 
 
-# Clear the attendance file
 def clear_attendance():
-    cap.release()  # Release webcam capture resources
+    global cap  # Add a global declaration for the 'cap' variable
+    if cap is not None:
+        cap.release()  # Release webcam capture resources
+        cap = None  # Set 'cap' to None after releasing
     cv2.destroyAllWindows()
     attendance_file = f'Attendance/Attendance-{datetoday}.csv'
     if os.path.isfile(attendance_file):
@@ -116,7 +118,6 @@ def clear_attendance():
         st.success("Attendance cleared successfully.")
     else:
         st.warning("No attendance file found.")
-
 
 # Main page
 def home():
