@@ -106,11 +106,10 @@ def add_attendance(name, emotion):
             f.write(f'\n{username},{userid},{current_time},{emotion}')
 
 
-def clear_attendance():
-    global cap  # Add a global declaration for the 'cap' variable
+# Clear the attendance file
+def clear_attendance(cap):
     if cap is not None:
         cap.release()  # Release webcam capture resources
-        cap = None  # Set 'cap' to None after releasing
     cv2.destroyAllWindows()
     attendance_file = f'Attendance/Attendance-{datetoday}.csv'
     if os.path.isfile(attendance_file):
@@ -119,8 +118,9 @@ def clear_attendance():
     else:
         st.warning("No attendance file found.")
 
+
 # Main page
-def home():
+def home(cap):
     names, rolls, times, emotions, l = extract_attendance()
     st.title("SMART ATTENDANCE AND EMOTION TRACKING SYSTEM USING FACIAL RECOGNITION TECHNOLOGY")
     st.image('https://emerj.com/wp-content/uploads/2018/04/facial-recognition-applications-security-retail-and-beyond.jpg',
@@ -130,10 +130,10 @@ def home():
 
     if st.button("Take Attendance"):
         st.write("Taking attendance...")
-        start()
+        start(cap)
 
     if st.button("Clear Attendance"):
-        clear_attendance()
+        clear_attendance(cap)
 
     st.write("Attendance:")
     attendance_df = pd.DataFrame({"Name": names, "Roll": rolls, "Time": times, "Emotion": emotions})
@@ -141,7 +141,7 @@ def home():
 
 
 # Run when clicking on Take Attendance button
-def start():
+def start(cap):
     stop_camera = False  # Variable to control stopping the camera
 
     try:
@@ -243,12 +243,13 @@ def select_user():
 
 # Main function to run the Streamlit App
 def main():
+    global cap  # Add a global declaration for the 'cap' variable
     st.set_page_config(page_title="Attendance Tracking System Using Facial Technology")
     menu = ["Home", "Add User", "View Registered Users"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Home":
-        home()
+        home(cap)
     elif choice == "Add User":
         add()
     elif choice == "View Registered Users":
@@ -257,4 +258,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
