@@ -107,7 +107,8 @@ def add_attendance(name, emotion):
 
 
 # Clear the attendance file
-def clear_attendance(cap):
+def clear_attendance():
+    global cap
     if cap is not None:
         cap.release()  # Release webcam capture resources
     cv2.destroyAllWindows()
@@ -120,7 +121,8 @@ def clear_attendance(cap):
 
 
 # Main page
-def home(cap):
+def home():
+    global cap
     names, rolls, times, emotions, l = extract_attendance()
     st.title("SMART ATTENDANCE AND EMOTION TRACKING SYSTEM USING FACIAL RECOGNITION TECHNOLOGY")
     st.image('https://emerj.com/wp-content/uploads/2018/04/facial-recognition-applications-security-retail-and-beyond.jpg',
@@ -130,10 +132,10 @@ def home(cap):
 
     if st.button("Take Attendance"):
         st.write("Taking attendance...")
-        start(cap)
+        start()
 
     if st.button("Clear Attendance"):
-        clear_attendance(cap)
+        clear_attendance()
 
     st.write("Attendance:")
     attendance_df = pd.DataFrame({"Name": names, "Roll": rolls, "Time": times, "Emotion": emotions})
@@ -141,17 +143,17 @@ def home(cap):
 
 
 # Run when clicking on Take Attendance button
-def start(cap):
+def start():
+    global cap
     stop_camera = False  # Variable to control stopping the camera
+    if 'face_recognition_model.pkl' not in os.listdir('static'):
+        st.warning("There is no trained model in the static folder. Please add a new face to continue.")
+        return
 
     try:
         cap = cv2.VideoCapture(0)
     except:
-        try:
-            cap = cv2.VideoCapture(1)
-        except:
-            st.error("Failed to access the camera.")
-            return
+        cap = cv2.VideoCapture(1)
 
     while True:
         if stop_camera:  # Check if stop_camera is True
@@ -243,13 +245,12 @@ def select_user():
 
 # Main function to run the Streamlit App
 def main():
-    global cap  # Add a global declaration for the 'cap' variable
     st.set_page_config(page_title="Attendance Tracking System Using Facial Technology")
     menu = ["Home", "Add User", "View Registered Users"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Home":
-        home(cap)
+        home()
     elif choice == "Add User":
         add()
     elif choice == "View Registered Users":
