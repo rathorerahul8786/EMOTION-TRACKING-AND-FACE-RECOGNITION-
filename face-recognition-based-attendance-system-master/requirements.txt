@@ -5,5 +5,5 @@ pandas
 joblib
 tensorflow
 numpy
-streamlit-webrtc opencv-python-headless
+
 
