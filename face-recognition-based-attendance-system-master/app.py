@@ -1,7 +1,8 @@
 import cv2
 import os
 import streamlit as st
-from datetime import date, datetime
+from datetime import date
+from datetime import datetime
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 import pandas as pd
@@ -9,6 +10,7 @@ import joblib
 from tensorflow import keras
 
 from keras.models import load_model
+
 
 #### Saving Date today in 2 different formats
 datetoday = date.today().strftime("%m_%d_%y")
@@ -44,6 +46,7 @@ def extract_faces(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     face_points = face_detector.detectMultiScale(gray, 1.3, 5)
     return face_points
+
 
 #### Identify face using ML model
 def identify_face(face_array):
@@ -100,32 +103,29 @@ def add_attendance(name, emotion):
         with open(f'Attendance/Attendance-{datetoday}.csv', 'a') as f:
             f.write(f'\n{username},{userid},{current_time},{emotion}')
 
-def is_running_in_gui_environment():
-    # Check if we are running in a GUI environment or not
-    try:
-        cv2.namedWindow("dummy", cv2.WINDOW_GUI_NORMAL)
-        return True
-    except cv2.error:
-        return False
+
+import time
+
+# Rest of the code...
 
 def clear_attendance():
-    if not is_running_in_gui_environment():
-        # Use headless mode to avoid GUI-related errors
-        cv2.destroyAllWindows = lambda: None
-
     cap.release()  # Release webcam capture resources
     attendance_file = f'Attendance/Attendance-{datetoday}.csv'
     if os.path.isfile(attendance_file):
-        time.sleep(1)  # Add a delay of 1 second
         os.remove(attendance_file)
         st.success("Attendance cleared successfully.")
     else:
         st.warning("No attendance file found.")
 
+
+
+################## ROUTING FUNCTIONS #########################
+
+#### Main page
 def home():
     names, rolls, times, emotions, l = extract_attendance()
     st.title("SMART ATTENDANCE AND EMOTION TRACKING SYSTEM USING FACIAL RECOGNITION TECHNOLOGY")
-    st.image('https://spectrum.ieee.org/media-library/ams.png?id=25587817&width=1200&height=600&coordinates=0%2C46%2C0%2C46', use_column_width=True)
+    st.image('https://emerj.com/wp-content/uploads/2018/04/facial-recognition-applications-security-retail-and-beyond.jpg', use_column_width=True)
     st.write(f"Date: {datetoday2}")
     st.write(f"Total Registered Users: {total_reg()}")
 
@@ -140,16 +140,16 @@ def home():
     attendance_df = pd.DataFrame({"Name": names, "Roll": rolls, "Time": times, "Emotion": emotions})
     st.write(attendance_df)
 
+#### Run when clicking on Take Attendance button
+import streamlit as st
+
 def start():
     stop_camera = False  # Variable to control stopping the camera
     if 'face_recognition_model.pkl' not in os.listdir('static'):
         st.warning("There is no trained model in the static folder. Please add a new face to continue.")
         return
 
-    while True:
-        if stop_camera:  # Check if stop_camera is True
-            break
-
+    while not stop_camera:
         ret, frame = cap.read()
         if ret:
             face_points = extract_faces(frame)
@@ -169,13 +169,11 @@ def start():
                 cv2.putText(frame, f'Emotion: {emotion}', (30, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 20), 2,
                             cv2.LINE_AA)
 
-            # Check if frame dimensions are valid
-            if frame.size != 0 and frame.shape[0] > 0 and frame.shape[1] > 0:
-                cv2.imshow('Attendance', frame)
+            # Display the frame using Streamlit's image function
+            st.image(frame, channels="BGR", use_column_width=True)
 
-            if cv2.waitKey(1) == 27:  # Press 'Esc' key to stop the camera
-                stop_camera = True
-                break  # Break out of the while loop
+        # Sleep for a short interval to capture frames asynchronously
+        time.sleep(0.1)
 
     cap.release()
     cv2.destroyAllWindows()
@@ -184,19 +182,26 @@ def start():
     st.write("Attendance:")
     st.write(attendance_df)
 
+
+
+
 def add():
     new_username = st.text_input("New User Name:")
     new_userid = st.text_input("New User ID:")
     if st.button("Add User"):
-        if not is_running_in_gui_environment():
-            # Use headless mode to avoid GUI-related errors
-            cv2.imshow = lambda *args: None
-
         user_image_folder = 'static/faces/' + new_username + '_' + str(new_userid)
         if not os.path.isdir(user_image_folder):
             os.makedirs(user_image_folder)
         i, j = 0, 0
-        while j < 500:
+        stop_camera = False  # Variable to control stopping the camera
+
+        # Generate a unique key for the "Stop" button using the user name and user ID
+        stop_button_key = f"stop_button_{new_username}_{new_userid}"
+
+        # Add the "Stop" button outside the loop
+        stop_button = st.button("Stop", key=stop_button_key)
+
+        while j < 500 and not stop_camera:
             ret, frame = cap.read()
             if ret:
                 faces = extract_faces(frame)
@@ -208,10 +213,13 @@ def add():
                         cv2.imwrite(user_image_folder + '/' + name, frame[y:y + h, x:x + w])
                         i += 1
                     j += 1
-                if frame.size != 0 and frame.shape[0] > 0 and frame.shape[1] > 0:
-                    cv2.imshow('Adding new User', frame)
-                if cv2.waitKey(1) == 27:
-                    break
+                # Display the frame using Streamlit's image function
+                st.image(frame, channels="BGR", use_column_width=True)
+
+            # Check if the "Stop" button is clicked
+            if stop_button:
+                stop_camera = True
+
         cv2.destroyAllWindows()
         st.write("Training Model...")
         train_model()
@@ -220,6 +228,20 @@ def add():
         st.write("Attendance:")
         st.write(attendance_df)
 
+# ...
+
+
+
+
+
+# ...
+
+
+
+# ...
+
+
+#### Run when selecting a user
 def select_user():
     user_list = os.listdir('static/faces')
     selected_user = st.selectbox("Select User:", user_list)
@@ -232,6 +254,7 @@ def select_user():
     else:
         st.warning("No images found for the selected user.")
 
+#### Main function to run the Streamlit App
 def main():
     st.set_page_config(page_title="Attendance Tracking System Using Facial Technology")
     menu = ["Home", "Add User", "View Registered Users"]
